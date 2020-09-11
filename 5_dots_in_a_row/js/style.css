@@ -1,0 +1,17 @@
+#game td {
+    width: 20px;
+    height: 20px;
+    border: 1px solid black;
+}
+
+#game td.gamer1 {
+    background: yellow;
+}
+
+#game td.gamer2 {
+    background: green;
+}
+
+#game td.winner {
+    border: 1px solid red;
+}
