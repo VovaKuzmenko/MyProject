@@ -11,8 +11,10 @@ class Game {
     };
 
     score = 0;
-    lines = 19;
-   
+    lines = 0;
+    topOut = false;
+    isGameOver = this.topOut;
+
     playfield = this.createPlayfield();
     activePiece = this.createPiece();
     nextPiece = this.createPiece();
@@ -335,17 +337,36 @@ class Sheet {
 
         this._sheet = document.getElementById('root');       
                 
-        this._tetronimo = new Tetronimo;        
+        this._tetronimo = new Tetronimo;
 
-        let tetris = this._tetronimo.render(this._sheet, this.game.getState());
+        this._tetronimo.renderNextPiece(this.game.nextPiece);
+        
+        //let tetris = this._tetronimo.render(this._sheet, this.game.getState());
     
-    /**
-     * buttons - events
-     * @docs multiplyMaker - bind the figure control to buttons
-     * @param {*}
-    */
-    document.addEventListener('keydown', event => {
-            
+        const speed = 1000 - this.game.getState().level * 100;
+        setInterval(() => {
+            this.update();
+        }, speed > 0 ? speed : 1000);
+        
+        document.addEventListener('keydown', this.handleKeyDown.bind(this));
+    }   
+        
+        /**
+         * updates the data for setInterval
+         * @docs multiplyMaker
+         * @param {*}
+        */
+        update() {        
+            this.game.movePieceDown();
+            this._tetronimo.render(this._sheet, this.game.getState(), this.game.activePiece.color);
+        }
+
+        /**
+         * buttons - events
+         * @docs multiplyMaker - bind the figure control to buttons
+         * @param {*}
+        */
+       handleKeyDown(event) {
         switch (event.keyCode) {
             
             case 37:                
@@ -365,9 +386,9 @@ class Sheet {
                 this._tetronimo.render(this._sheet, this.game.getState());
                 break;
         }
-    });
     }
 }
+
 
 /**
      * class drawing the game
@@ -376,6 +397,16 @@ class Sheet {
     */
 class Tetronimo {
     
+    static colors = {
+        '1': 'cyan',
+        '2': 'blue',
+        '3': 'orange',
+        '4': 'yellow',
+        '5': 'green',
+        '6':  'purple',
+        '7': 'red'
+        }; 
+
     /**
      * draw the playing field
      * @docs multiplyMaker
@@ -394,12 +425,12 @@ class Tetronimo {
      * game field update
      * @docs multiplyMaker
      * @param {*} - tetris element, playfield
-    */
+    *//*
     renderUpdate(tetris, playfield) {
         this.clearCell();
         this.renderPlayfield(tetris, playfield);
     }
-
+*/
     /**
      * draw the cell array
      * @docs multiplyMaker
@@ -421,6 +452,7 @@ class Tetronimo {
 
                 if(block) {
                     cell.classList.add('set');
+                    cell.style.backgroundColor = Tetronimo.colors[block]; 
                 }
             } 
         }        
@@ -436,6 +468,27 @@ class Tetronimo {
 
     for (let i = 0; i < tetris.children.length; i++ ) {    
         tetris.children[i].classList.remove('set');
+        }
+    }
+
+    /**
+     * next shape field
+     * @docs multiplyMaker - next figure
+     * @param {*} - next figure
+    */
+    renderNextPiece(nextPiece) {
+        let nextP = document.getElementById('nextP'); 
+        
+        for (let y = 0; y < nextPiece.blocks.length; y++) {            
+            for (let x = 0; x < nextPiece.blocks[y].length; x++) {
+                const block = nextPiece.blocks[y][x];            
+    
+                let cell = document.createElement('div');
+                    cell.setAttribute('posX', x);
+                    cell.setAttribute('posY', y);
+                    cell.classList.add('cell');
+                    nextP.appendChild(cell);                    
+            }               
         }
     }
 }
