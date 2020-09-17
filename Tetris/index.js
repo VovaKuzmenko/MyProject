@@ -1,18 +1,36 @@
-
+/**
+   * Game mechanics   
+*/ 
 class Game {
 
-    score = 0;
-    lines = 0;
-    level = 0;
+    static points = {
+        '1': 40,
+        '2': 100,
+        '3': 300,
+        '4': 1200
+    };
 
     score = 0;
-    lines = 0;
-    level = 0;
-
+    lines = 19;
+   
     playfield = this.createPlayfield();
     activePiece = this.createPiece();
     nextPiece = this.createPiece();
 
+     /**
+        * method of obtaining game level
+        * @docs multiplyMaker - get level
+        * @param {*}   
+    */
+    get level() {
+        return Math.floor(this.lines * 0.1);
+    }
+
+    /**
+        *displaying the state of the playing field
+        * @docs multiplyMaker - getting the playing field
+        * @param {*}   
+    */ 
     getState() {
         const playfield = this.createPlayfield();
         const { y: pieceY, x: pieceX, blocks } = this.activePiece;
@@ -36,6 +54,12 @@ class Game {
         return playfield
         }
 
+    /**
+        * array playing field
+        * @docs multiplyMaker - array creation
+        * @param {*}   
+    */ 
+
     createPlayfield() {
         const playfield =[];
     
@@ -49,6 +73,11 @@ class Game {
         return playfield
     }
 
+    /**
+        * movement of the figure to the left
+        * @docs multiplyMaker - checking the possibility of displacement of the figure
+        * @param {*}   
+    */ 
     movePieceLeft() {
         this.activePiece.x -= 1;
 
@@ -57,6 +86,11 @@ class Game {
         }
     }
 
+    /**
+        * movement of the figure to the right
+        * @docs multiplyMaker - checking the possibility of displacement of the figure
+        * @param {*}   
+    */ 
     movePieceRight() {
         this.activePiece.x += 1;
 
@@ -65,16 +99,28 @@ class Game {
         }      
     }
 
+    /**
+        * move figure down
+        * @docs multiplyMaker - checking the possibility of displacement of the figure
+        * @param {*}   
+    */ 
     movePieceDown() { 
         this.activePiece.y +=1;
         
         if (this.hasCollision()) {       
             this.activePiece.y -=1;
             this.lockPiece();
+            const clearLines = this.clearLines();
+            this.updateScore(clearLines);
+            this.clearLines();
             this.updatePieces();
         }
     }
 
+    /**
+        * figure rotation
+        * @docs multiplyMaker - change the values of the cells of the array with the figure
+    */ 
     rotatePiece() {
         const blocks = this.activePiece.blocks;
         const length = blocks.length;
@@ -97,6 +143,10 @@ class Game {
         }   
     }
 
+    /**
+        * checking if a piece is in the playing field
+        * @docs multiplyMaker - displacement of the shape when it reaches the field boundaries
+    */ 
     hasCollision() {
         const { y: pieceY, x: pieceX, blocks } = this.activePiece;
 
@@ -114,6 +164,10 @@ class Game {
         return false;
     }
 
+    /**
+        * method that transfers values from the array of the active figure to the playing field
+        * @docs multiplyMaker - fixes the figure in the playing field
+    */
     lockPiece() {
         const { y: pieceY, x: pieceX, blocks } = this.activePiece;        
 
@@ -126,6 +180,47 @@ class Game {
         }
     }
     
+    /**
+     * cleaning lines
+     * @docs multiplyMaker - remove the line when filling
+     * @param {*}    
+    */ 
+    clearLines() {
+        const rows = 20;
+        const columns = 10;
+        let lines = [];
+
+        for (let y = rows - 1; y >= 0; y--) {
+            let numberOfBlocks = 0;
+
+            for (let x = 0; x < columns; x++) {
+                if (this.playfield[y][x]) {
+                    numberOfBlocks += 1;
+                }                
+            }
+
+            if (numberOfBlocks === 0) {
+                break;
+            } else if (numberOfBlocks < columns) {
+                continue;
+            } else if (numberOfBlocks === columns) {
+                lines.unshift(y);
+            }
+        }
+        
+
+        for (let index of lines) {
+            this.playfield.splice(index, 1);
+            this.playfield.unshift(new Array(columns).fill(0));
+        }
+        return lines.length;
+    }
+
+    /**
+     * creating a figure of various shapes
+     * @docs multiplyMaker - we introduce arrays with the necessary shapes
+     * @param {*}    
+    */
     createPiece() {
         const index = Math.floor(Math.random() * 7);
         const type = 'IJLOSTZ'[index];
@@ -199,19 +294,42 @@ class Game {
         return piece;
     }
 
+    /**
+     * falling figure update
+     * @docs multiplyMaker - update figure
+     * @param {*}    
+    */
     updatePieces() {
         this.activePiece = this.nextPiece;
         this.nextPiece = this.createPiece();
-    }       
+    } 
+    
+     /**
+     * account update
+     * @docs multiplyMaker - update of the account depending on the deleted lines
+     * @param {*} -  deleted lines
+    */
+    updateScore(clearLines) {
+        console.log(this.level);
+        if (clearLines > 0) {
+            this.score += Game.points[clearLines] * (this.level + 1);
+            this.lines += clearLines;  
+            console.log(this.score, this.lines, this.level);              
+        }
+} 
 }
 
 let selector = document.getElementById('root');
 
-
-
-
+ /**
+     * class control of pieces on the field
+     * @docs multiplyMaker
+     * @param {*}
+*/
 class Sheet {
     constructor(selector, playfield) {
+
+        this.game = new Game();
 
         this.playfield =  playfield 
 
@@ -219,16 +337,50 @@ class Sheet {
                 
         this._tetronimo = new Tetronimo;        
 
-        this._tetronimo.render(this._sheet, this.playfield);
+        let tetris = this._tetronimo.render(this._sheet, this.game.getState());
+    
+    /**
+     * buttons - events
+     * @docs multiplyMaker - bind the figure control to buttons
+     * @param {*}
+    */
+    document.addEventListener('keydown', event => {
+            
+        switch (event.keyCode) {
+            
+            case 37:                
+                this.game.movePieceLeft();
+                this._tetronimo.render(this._sheet, this.game.getState());
+                break;            
+            case 38:
+                this.game.rotatePiece();
+                this._tetronimo.render(this._sheet, this.game.getState());
+                break;
+            case 39:
+                this.game.movePieceRight();
+                this._tetronimo.render(this._sheet, this.game.getState());
+                break;
+            case 40:
+                this.game.movePieceDown();
+                this._tetronimo.render(this._sheet, this.game.getState());
+                break;
+        }
+    });
     }
-
-    //getRandom() // выбор рандомной фигуры
-
-    //score() // начисление очков
 }
 
+/**
+     * class drawing the game
+     * @docs multiplyMaker
+     * @param {*}
+    */
 class Tetronimo {
     
+    /**
+     * draw the playing field
+     * @docs multiplyMaker
+     * @param {*} - parent element, playfield
+    */
     render(parent, playfield) {
        
         let tetris = document.createElement('div');
@@ -238,6 +390,21 @@ class Tetronimo {
         this.renderPlayfield(tetris, playfield);        
     }
 
+     /**
+     * game field update
+     * @docs multiplyMaker
+     * @param {*} - tetris element, playfield
+    */
+    renderUpdate(tetris, playfield) {
+        this.clearCell();
+        this.renderPlayfield(tetris, playfield);
+    }
+
+    /**
+     * draw the cell array
+     * @docs multiplyMaker
+     * @param {*} - muter element, playfield
+    */
     renderPlayfield(muter, playfield) {        
 
         for (let y = 0; y < playfield.length; y++) {
@@ -259,6 +426,11 @@ class Tetronimo {
         }        
     }
 
+     /**
+     * deleting cells
+     * @docs multiplyMaker
+     * @param {*}
+    */
     clearCell() {
         let tetris = document.querySelector('.tetris');        
 
