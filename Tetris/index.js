@@ -10,6 +10,7 @@ class Game {
         '4': 1200
     };
 
+    lev = 0;
     score = 0;
     lines = 0;
     topOut = false;
@@ -18,6 +19,7 @@ class Game {
     playfield = this.createPlayfield();
     activePiece = this.createPiece();
     nextPiece = this.createPiece();
+    next = this.nextPiece;
 
      /**
         * method of obtaining game level
@@ -114,8 +116,16 @@ class Game {
             this.lockPiece();
             const clearLines = this.clearLines();
             this.updateScore(clearLines);
+            this.score = this.score;
+            this.lines = this.lines;
+            this.lev = this.level;  
             this.clearLines();
             this.updatePieces();
+            this.next = this.nextPiece; 
+        }
+
+        if (this.hasCollision()) {
+            this.topOut = true;
         }
     }
 
@@ -158,7 +168,7 @@ class Game {
                         ((this.playfield[pieceY + y] === undefined || this.playfield[pieceY + y][pieceX + x] === undefined) ||
                         this.playfield[pieceY + y][pieceX + x])
                     ) {
-                        return true/*playfield[y] === undefined || playfield[y][x] === undefined;*/
+                        return true
                 }
             }            
         }
@@ -304,6 +314,8 @@ class Game {
     updatePieces() {
         this.activePiece = this.nextPiece;
         this.nextPiece = this.createPiece();
+
+        return this.nextPiece;
     } 
     
      /**
@@ -334,15 +346,15 @@ class Sheet {
         this.game = new Game();
 
         this.playfield =  playfield 
+        this.intervalId = null;
+        this.isPlaying = false;
 
-        this._sheet = document.getElementById('root');       
+        this._sheet = document.getElementById('root');
+        this._nextP = document.getElementById('nextP');
+        this._buttonStart = document.getElementById('buttonStart');       
                 
         this._tetronimo = new Tetronimo;
 
-        this._tetronimo.renderNextPiece(this.game.nextPiece);
-        
-        //let tetris = this._tetronimo.render(this._sheet, this.game.getState());
-    
         const speed = 1000 - this.game.getState().level * 100;
         setInterval(() => {
             this.update();
@@ -356,10 +368,63 @@ class Sheet {
          * @docs multiplyMaker
          * @param {*}
         */
-        update() {        
+        update() {  
+            this._tetronimo.renderResult(this.game.score, this.game.lev, this.game.lines);      
             this.game.movePieceDown();
-            this._tetronimo.render(this._sheet, this.game.getState(), this.game.activePiece.color);
+            this._tetronimo.renderNextPiece(this._nextP, this.game.next);  
+            this._tetronimo.render(this._sheet, this.game.getState());
+            //this._tetronimo.render(this._sheet, this.game.getState(), this.game.activePiece.color);
         }
+
+        /**
+         * start game
+         * @docs multiplyMaker
+         * @param {*}
+        */
+        play() {
+            this.isPlaying = true;
+            this.startTimer();
+            //this.updateView()
+        }
+    
+         /**
+         * pause game
+         * @docs multiplyMaker
+         * @param {*}
+        */
+        pause() {
+            this.isPlaying = false;
+            this.stopTimer();
+           // this.updateView()
+        }
+
+           
+         /**
+         * start timer
+         * @docs multiplyMaker
+         * @param {*}
+        */
+        startTimer() {
+            const speed = 1000 - this.game.getState().level * 100;
+    
+            if (!this.intervalId) {
+                this.intervalId = setInterval(() => {
+                    this.update();
+                }, speed > 0 ? speed : 100);
+            }
+        }
+    
+         /**
+         * stop timer
+         * @docs multiplyMaker
+         * @param {*}
+        */
+        stopTimer() {
+            if (this.intervalId) {
+                clearInterval(this.intervalId);
+                    this.intervalId = null;            
+            }
+        }   
 
         /**
          * buttons - events
@@ -451,7 +516,7 @@ class Tetronimo {
                 muter.appendChild(cell);
 
                 if(block) {
-                    cell.classList.add('set');
+                    cell.classList.add('cell');
                     cell.style.backgroundColor = Tetronimo.colors[block]; 
                 }
             } 
@@ -472,29 +537,62 @@ class Tetronimo {
     }
 
     /**
-     * next shape field
-     * @docs multiplyMaker - next figure
-     * @param {*} - next figure
+   * clear the field of the next shape
+   * @desc - clear the next shape field
+   * @param {null} 
+   * @returns {null} 
+*/  
+clearNextPiece() {
+    let nextP = document.getElementById('nextP');
+
+    while (nextP.firstChild) {
+        nextP.removeChild(nextP.firstChild);
+    }
+}               
+
+    /**
+        * next shape field
+        * @desc - draws a next piece for display
+        * @param {*} - parent, arr nextPiece
+        * @returns {*} - draws a next piece
     */
-    renderNextPiece(nextPiece) {
-        let nextP = document.getElementById('nextP'); 
-        
-        for (let y = 0; y < nextPiece.blocks.length; y++) {            
+    renderNextPiece(father, nextPiece) {
+       
+        this.clearNextPiece();
+        for (let y = 0; y < nextPiece.blocks.length; y++) {
             for (let x = 0; x < nextPiece.blocks[y].length; x++) {
                 const block = nextPiece.blocks[y][x];            
-    
+
                 let cell = document.createElement('div');
-                    cell.setAttribute('posX', x);
-                    cell.setAttribute('posY', y);
-                    cell.classList.add('cell');
-                    nextP.appendChild(cell);                    
-            }               
-        }
+                cell.classList.add('cellnext');
+                father.appendChild(cell);
+            
+                if(block) {                    
+                
+                    cell.classList.add('cellnext');
+                    cell.style.backgroundColor = Tetronimo.colors[block];                    
+                }
+            }
+        }    
     }
+
+    /**
+   * data display
+   * @desc - data display
+   * @param {*}
+   * @returns {*} 
+*/    
+renderResult(score, level, lines) {
+    let scoreResult = document.getElementById('scoreResult');
+    let levelResult = document.getElementById('levelResult');
+    let linesResult = document.getElementById('linesResult');
+    scoreResult.innerHTML = score;
+    levelResult.innerHTML = level;
+    linesResult.innerHTML = lines;            
+}
 }
     
 let game = new Game();
-console.log(game.playfield);
 //new Tetronimo('root');
 new Sheet('root', game.getState());
 //let game = new Game();
