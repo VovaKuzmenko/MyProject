@@ -218,8 +218,7 @@ class Game {
             } else if (numberOfBlocks === columns) {
                 lines.unshift(y);
             }
-        }
-        
+        }        
 
         for (let index of lines) {
             this.playfield.splice(index, 1);
@@ -351,16 +350,15 @@ class Sheet {
 
         this._sheet = document.getElementById('root');
         this._nextP = document.getElementById('nextP');
-        this._buttonStart = document.getElementById('buttonStart');       
+        this._buttonStart = document.getElementById('buttonStart'); 
+        this._buttonPause = document.getElementById('buttonPause');      
                 
         this._tetronimo = new Tetronimo;
 
-        const speed = 1000 - this.game.getState().level * 100;
-        setInterval(() => {
-            this.update();
-        }, speed > 0 ? speed : 1000);
-        
         document.addEventListener('keydown', this.handleKeyDown.bind(this));
+        this._buttonStart.addEventListener('click', this.play.bind(this));
+        this._buttonPause.addEventListener('click', this.pause.bind(this));
+
     }   
         
         /**
@@ -372,8 +370,7 @@ class Sheet {
             this._tetronimo.renderResult(this.game.score, this.game.lev, this.game.lines);      
             this.game.movePieceDown();
             this._tetronimo.renderNextPiece(this._nextP, this.game.next);  
-            this._tetronimo.render(this._sheet, this.game.getState());
-            //this._tetronimo.render(this._sheet, this.game.getState(), this.game.activePiece.color);
+            this._tetronimo.render(this._sheet, this.game.getState());           
         }
 
         /**
@@ -383,8 +380,7 @@ class Sheet {
         */
         play() {
             this.isPlaying = true;
-            this.startTimer();
-            //this.updateView()
+            this.startTimer();            
         }
     
          /**
@@ -394,10 +390,8 @@ class Sheet {
         */
         pause() {
             this.isPlaying = false;
-            this.stopTimer();
-           // this.updateView()
+            this.stopTimer();           
         }
-
            
          /**
          * start timer
@@ -410,7 +404,7 @@ class Sheet {
             if (!this.intervalId) {
                 this.intervalId = setInterval(() => {
                     this.update();
-                }, speed > 0 ? speed : 100);
+                }, speed > 0 ? speed : 1000);
             }
         }
     
@@ -454,7 +448,6 @@ class Sheet {
     }
 }
 
-
 /**
      * class drawing the game
      * @docs multiplyMaker
@@ -483,7 +476,9 @@ class Tetronimo {
         tetris.classList.add('tetris');
         parent.appendChild(tetris);
         this.clearCell();
-        this.renderPlayfield(tetris, playfield);        
+        this.renderPlayfield(tetris, playfield); 
+        
+        return tetris
     }
 
      /**
@@ -509,9 +504,7 @@ class Tetronimo {
             for (let x = 0; x < line.length; x++) {
                 const block = playfield[y][x];
                 
-                let cell = document.createElement('div');
-                cell.setAttribute('posX', x);
-                cell.setAttribute('posY', y);
+                let cell = document.createElement('div');                
                 cell.classList.add('cell');
                 muter.appendChild(cell);
 
@@ -529,7 +522,7 @@ class Tetronimo {
      * @param {*}
     */
     clearCell() {
-        let tetris = document.querySelector('.tetris');        
+        let tetris = document.querySelector('#root');        
 
     for (let i = 0; i < tetris.children.length; i++ ) {    
         tetris.children[i].classList.remove('set');
