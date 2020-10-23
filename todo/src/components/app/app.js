@@ -5,22 +5,24 @@ import SearchPanel from '../search-panel';
 import TodoList from '../todo-list';
 import ItemStatusFilter from '../item-status-filter';
 
-const App = () => {
+import './app.css';
 
+const App = () => {
+  console.log(TodoList)
   const todoData = [
     { label: 'Drink Coffee', important: false, id: 1 },
     { label: 'Make Awesome App', important: true, id: 2 },
     { label: 'Have a lunch', important: false, id: 3 }
   ];
- // <TodoList todos={todoData} />  
+ 
   return (
-    <div>
+    <div className="todo-app">
       <AppHeader toDo={1} done={3} />
-      <div>
+      <div className="top-panel d-flex">
         <SearchPanel />
         <ItemStatusFilter />
       </div>
-          
+      <TodoList todos={todoData} />   
     </div>
   );
 };
